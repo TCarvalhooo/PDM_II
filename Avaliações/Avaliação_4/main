@@ -1,0 +1,74 @@
+import 'dart:async';
+import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'IoT Temperature Monitor',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: TemperatureMonitor(),
+    );
+  }
+}
+
+class TemperatureMonitor extends StatefulWidget {
+  @override
+  _TemperatureMonitorState createState() => _TemperatureMonitorState();
+}
+
+class _TemperatureMonitorState extends State<TemperatureMonitor> {
+  double _currentTemperature = 0.0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startSendingTemperature();
+  }
+
+  void _startSendingTemperature() {
+    _timer = Timer.periodic(Duration(seconds: 10), (timer) {
+      double temperature = Random().nextDouble() * 100; // Simula uma leitura de temperatura
+      _sendTemperature(temperature);
+    });
+  }
+
+  Future<void> _sendTemperature(double temperature) async {
+    var url = Uri.parse('http://192.168.1.100:3000/temperature'); // Substitua pelo IP do seu computador
+    await http.post(url, body: {'temperature': temperature.toString()});
+    setState(() {
+      _currentTemperature = temperature;
+    });
+    print('Temperatura enviada: $temperature');
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Monitor de Temperatura IoT'),
+      ),
+      body: Center(
+        child: Text(
+          'Temperatura atual: ${_currentTemperature.toStringAsFixed(2)} °C',
+          style: TextStyle(fontSize: 24),
+        ),
+      ),
+    );
+  }
+}
